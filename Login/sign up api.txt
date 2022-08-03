@@ -1,0 +1,71 @@
+import dbquery
+from flask import Flask, request, json
+import re
+
+app = Flask(__name__)
+
+# TODO: Check if sanitization is needed
+# TODO: Frontend needs to send responses as a json
+
+# route to signup page
+@app.route("/api/validate-signup/", methods = ["POST"])
+def response_validation():
+    # get data from front end - json format
+    request_data = request.json
+
+    # signup response set at the beginning
+    response = {"API-Signup-Response"}
+    # error codes
+    
+    error_code_2 = "Invalid username"
+    error_code_3 = "Invalid password"
+
+    # Username validation - only numbers and letters allowed
+    # Get username value from json form
+    username = request_data["username"]
+    # test if username is alphanumeric
+    if not (username.isalnum()):
+        print("username is not alphanumeric")
+        response["API-Signup-Response"] = "Invalid username"
+        return json.dumps(response)
+
+    # Email validation - use regex to validate that:
+    #
+    #   email has an @ symbol
+    #   before the @ symbol that letters are alphanumeric and/or contain .
+    #   after the @ symbol that there is a (.)
+    #   after the . symbol that that the domain is alpha
+    # Get email value from json form
+    email = request_data["username"]
+    email_rules = "^[a-zA-Z0-9\.]+@[a-zA-Z0-9]+\.[a-z]$"
+    if not (re.match(email, email_rules)):
+        print("email does not match email convetions")
+        response["API-Signup-Response"] = "Invalid email"
+        return json.dumps(response)
+
+    # Password validation - use regex to validate that only numbers and letters allowed
+    password = request_data["password"]
+    email_rules = "^[a-zA-Z0-9\.]+@[a-zA-Z0-9]+\.[a-z]$"
+    # TODO Technical Debt: passwords are only alphanumeric
+    # TODO Technical Debt: passwords do not have a length, cap, num, spec chars requirements
+    if not (re.match(email, email_rules)):
+        print("password is not alphanumeric")
+        response["API-Signup-Response"] = "Invalid password"
+        return json.dumps(response)
+
+    # temporary code for database detection of email
+    if (dbquery.check_existing_email(email)):
+        print("email already exists")
+        response["API-Signup-Response"] = "Invalid email"
+        return json.dumps(response)
+    
+    # temporary code for database detection of username
+    if (dbquery.check_existing_user(username)):
+        print("user already exists")
+        response["API-Signup-Response"] = "Invalid username"
+        return json.dumps(response)
+    
+    # valid input 
+    response["API-Signup-Response"] = "Valid input"
+    # create user in the database with credentials
+    dbquery.create_user(username, email, password)
